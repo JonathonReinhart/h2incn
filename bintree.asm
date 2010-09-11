@@ -1336,23 +1336,21 @@ binarytree_insert_node:
    mov  rbp, rsp
    sub  rsp, 48                ; create SLV and RSS
 
-   mov  rax, 1                 ; assume param error
-
    ; validate parameters to ensure tree integrity
    cmp  rcx, 0
-   je   BST_I_N_X              ; if pptr == 0 then jmp to exit
+   je   BST_I_N_RET_1          ; if pptr == 0 then jmp to exit
 
    cmp  rdx, 0
-   je   BST_I_N_X              ; if node == 0 then jmp to exit
+   je   BST_I_N_RET_1          ; if node == 0 then jmp to exit
 
    mov  qword win64_rss1, rcx  ; save register param values
    mov  qword win64_rss2, rdx  ;
 
-   mov  rcx, qword[rcx]        ; get root ptr
+   mov  rcx, qword[rcx]        ; rcx = ptr to current node
    cmp  rcx, 0
-   je   BST_I_N_X              ; if rcx == 0 then jmp to exit
+   je   BST_I_N_8
 
-   mov  qword slv_proot, rcx   ; save root ptr
+   mov  qword slv_pnode, rcx   ; save ptr to current node
 
    ; get shortest key length
    mov  r8d, dword[rcx + _bst_node_t.klen]
@@ -1371,8 +1369,8 @@ BST_I_N_1:
    mov  rcx, qword[rcx + _bst_node_t.key]
    mov  rdx, qword[rdx + _bst_node_t.key]
    call memcmp
-   mov  rcx, qword slv_proot   ; rcx = root ptr
-   mov  rdx, qword win64_rss2  ; rdx = node ptr
+   mov  rcx, qword slv_pnode   ; rcx = ptr to current node
+   mov  rdx, qword win64_rss2  ; rdx = ptr to new node
    cmp  eax, 0
    je   BST_I_N_7
    jl   BST_I_N_4
@@ -1403,14 +1401,14 @@ BST_I_N_5:
    mov  qword[rcx + _bst_node_t.left], rdx
    ; update user node parent
    mov  qword[rdx + _bst_node_t.parent], rcx
-   jmp  BST_I_N_0
+   jmp  BST_I_N_RET_0
 
 BST_I_N_6:
    ; insert into right child ptr
    mov  qword[rcx + _bst_node_t.right], rdx
    ; update user node parent
    mov  qword[rdx + _bst_node_t.parent], rcx
-   jmp  BST_I_N_0
+   jmp  BST_I_N_RET_0
 
 BST_I_N_7:
    ; assert: since keys are equal check lengths
@@ -1426,44 +1424,22 @@ BST_I_N_7:
    mov  qword[rdx + _bst_node_t.left], rax
    mov  rax, qword[rcx + _bst_node_t.right]
    mov  qword[rdx + _bst_node_t.right], rax
-   mov  r10, qword[rcx + _bst_node_t.parent]
-   mov  qword[rdx + _bst_node_t.parent], r10
-
-   cmp  r10, 0
-   je   BST_I_N_10             ; if root ptr
-
-   ; assert: not root node, update ptr
-   mov  rax, qword[r10 + _bst_node_t.left]
-   cmp  rax, rcx
-   je   BST_I_N_8
-
-   mov  rax, qword[r10 + _bst_node_t.right]
-   cmp  rax, rcx
-   je   BST_I_N_9
-
-   ; neither ptr comparing is a serious integrity error
-   jmp  BST_I_N_X
+   mov  rax, qword[rcx + _bst_node_t.parent]
+   mov  qword[rdx + _bst_node_t.parent], rax
 
 BST_I_N_8:
-   ; assert: swapping parent left node
-   mov  qword[r10 + _bst_node_t.left], rdx
-   jmp  BST_I_N_11
+   mov  rax, qword win64_rss1  ; rax = address of ptr
+   mov  qword [rax], rdx       ; store new node ptr
+   cmp  rcx, 0                 ; check for null root
+   je   BST_I_N_RET_0          ; if rcx == null jmp to exit
+   call free                   ; free old node
+   jmp  BST_I_N_RET_0
 
-BST_I_N_9:
-   ; assert: swapping parent right node
-   mov  qword[r10 + _bst_node_t.right], rdx
-   jmp  BST_I_N_11
+BST_I_N_RET_1:
+   mov  rax, 1                 ; rax = 1 ( param error )
+   jmp  BST_I_N_X
 
-BST_I_N_10:
-   ; assert: swapping out root node
-   mov  rax, qword win64_rss1  ; rcx = address of root ptr
-   mov  qword [rax], rdx       ; store new root node ptr
-
-BST_I_N_11:
-   ; safe to free old node
-   call free
-
-BST_I_N_0:
+BST_I_N_RET_0:
    xor  rax, rax               ; rax = 0 ( success )
 
 BST_I_N_X:
@@ -1485,14 +1461,13 @@ BST_I_N_X:
 ;
 ; Returns
 ;    eax
-;       = 0 if successful, otherwise err code
+;       = 0 if successful
 ;       = 1 if parameter error
-;       = 2 if insufficient memory
-;       = 3 if key not found
+;       = 2 if key not found
 ;
 ; Notes
-;    If the only node in the tree is the root node and it compares
-;    to the key param it is deleted and will be set to null
+;    If the only node remaining in the tree is the root node and it
+;    compares to the key param it is deleted and will be set to null
 ;
 binarytree_delete_node:
    push rbp                    ; set up stack frame
@@ -1500,13 +1475,13 @@ binarytree_delete_node:
    sub  rsp, 48                ; create SLV and RSS
 
    cmp  rcx, 0
-   je   BST_D_N_RET_1          ; if pptr == null then return param error
+   je   BST_D_N_RET_1          ; if pptr == null return param error
 
    cmp  rdx, 0
-   je   BST_D_N_RET_1          ; if key == null then return param error
+   je   BST_D_N_RET_1          ; if key == null return param error
 
    cmp  r8, 0
-   je   BST_D_N_RET_1          ; if len == then return param error
+   je   BST_D_N_RET_1          ; if len == 0 return param error
 
    mov  qword win64_rss1, rcx  ; save register param values to RSS
    mov  qword win64_rss2, rdx  ;
@@ -1514,9 +1489,9 @@ binarytree_delete_node:
 
    mov  rcx, [rcx]             ; get root ptr
    cmp  rcx, 0
-   je   BST_D_N_RET_1          ; if rcx == 0 then return param error
+   je   BST_D_N_RET_1          ; if rcx == 0 return param error
 
-   mov  qword slv_proot, rcx   ; save root ptr
+   mov  qword slv_pnode, rcx   ; save ptr to current node
 
    ; get shortest key length
    mov  eax, dword[rcx + _bst_node_t.klen]
@@ -1531,7 +1506,7 @@ BST_D_N_1:
    mov  rdx, qword[rcx + _bst_node_t.key]
    mov  rcx, qword win64_rss2
    call memcmp
-   mov  rcx, qword slv_proot   ; rcx = node ptr
+   mov  rcx, qword slv_pnode   ; rcx = node ptr
    cmp  eax, 0
    je   BST_D_N_5
    jg   BST_D_N_4
@@ -1541,7 +1516,7 @@ BST_D_N_2:
    add  rcx, _bst_node_t.left  ; rcx = ptr to node.left
    mov  rax, qword[rcx]
    cmp  rax, 0
-   je   BST_D_N_RET_3          ; if left ptr == null then return not found
+   je   BST_D_N_RET_2          ; if left ptr == null return not found
 
 BST_D_N_3:
    mov  rdx, qword win64_rss2
@@ -1554,11 +1529,11 @@ BST_D_N_4:
    add  rcx, _bst_node_t.right ; rcx = ptr to node.right
    mov  rax, qword[rcx]
    cmp  rax, 0
-   je   BST_D_N_RET_3          ; if right ptr == null then return not found
+   je   BST_D_N_RET_2          ; if right ptr == null return not found
    jmp  BST_D_N_3
 
 BST_D_N_5:
-   ; assert: since keys are equal check lengths
+   ; assert: keys are equal, check lengths
    mov  eax, dword[rcx + _bst_node_t.klen]
    mov  r8,  qword win64_rss3  ; r8 = user key length
    cmp  r8d, eax
@@ -1566,13 +1541,116 @@ BST_D_N_5:
    jg   BST_D_N_4
 
    ; assert: keys are identical
+   mov  r9, rcx                ; r9 = node to delete
+   mov  r8, qword[r9]          ; r8 = _bst_node_t.parent
 
-   ; TODO: Delete this node
+   ; find replacement node, if any
+   mov  rcx, qword[r9 + _bst_node_t.right]
+   cmp  rcx, 0
+   je   BST_D_N_9              ; if right ptr == null try left
 
+   ; special case: check child node for valid left ptr
+   mov  rax, qword[rcx + _bst_node_t.left]
+   cmp  rax, 0
+   jne  BST_D_N_7B
+
+   ; assert: rcx = replacement node
+   ; set node to delete right ptr to replacement node right ptr
+   mov  rax, qword[rcx + _bst_node_t.right]
+   mov  qword[r9 + _bst_node_t.right], rax
+   jmp  BST_D_N_14A
+
+BST_D_N_7A:
+   ; find left-most node
+   mov  rax, qword[rcx + _bst_node_t.left]
+   cmp  rax, 0
+   je   BST_D_N_8
+BST_D_N_7B:
+   mov  rcx, rax
+   jmp  BST_D_N_7A
+
+BST_D_N_8:
+   ; assert: rcx = replacement node
+   ; set left ptr of parent node to replacement nodes right ptr
+   mov  rax, qword[rcx]        ; rax = _bst_node_t.parent
+   mov  rdx, qword[rcx + _bst_node_t.right]
+   mov  qword[rax + _bst_node_t.left], rdx
+   ; set child node new parent
+   cmp  rdx, 0
+   je   BST_D_N_14A
+   mov  qword[rdx], rax
+   jmp  BST_D_N_14A
+
+BST_D_N_9:
+   ; replace with right-most child of left branch
+   mov  rcx, qword[r9 + _bst_node_t.left]
+   cmp  rcx, 0
+   jne  BST_D_N_10
+
+   ; assert: both child ptrs are null, update parent.
+   ; This also handles special case of deleting last
+   ; node from tree ( root )
+   jmp  BST_D_N_15
+
+BST_D_N_10:
+   ; special case: check child node for valid right ptr
+   mov  rax, qword[rcx + _bst_node_t.right]
+   cmp  rax, 0
+   jne  BST_D_N_12B
+
+   ; assert: rcx = replacement node
+   ; set node to delete left ptr to replacement node left ptr
+   mov  rax, qword[rcx + _bst_node_t.left]
+   mov  qword[r9 + _bst_node_t.left], rax
+   jmp  BST_D_N_14A
+
+BST_D_N_12A:
+   ; find right-most node
+   mov  rax, qword[rcx + _bst_node_t.right]
+   cmp  rax, 0
+   je   BST_D_N_13
+BST_D_N_12B:
+   mov  rcx, rax
+   jmp  BST_D_N_12A
+
+BST_D_N_13:
+   ; assert: rcx = replacement node
+   ; set right child of parent to replacement nodes left child
+   mov  rax, qword[rcx + _bst_node_t.parent]
+   mov  rdx, qword[rcx + _bst_node_t.left]
+   mov  qword[rax + _bst_node_t.right], rdx
+   ; set child node new parent
+   cmp  rdx, 0
+   je   BST_D_N_14A
+   mov  qword[rdx], rax
+
+BST_D_N_14A:
+   ; copy node ptrs from r9 to rcx
+   mov  rax, qword[r9+_bst_node_t.parent]
+   mov  qword[rcx+_bst_node_t.parent], rax
+   mov  rax, qword[r9+_bst_node_t.left]
+   mov  qword[rcx+_bst_node_t.left], rax
+   cmp  rax, 0
+   je   BST_D_N_14B
+   mov  qword[rax], rcx        ; set new parent
+BST_D_N_14B:
+   mov  rax, qword[r9+_bst_node_t.right]
+   mov  qword[rcx+_bst_node_t.right], rax
+   cmp  rax, 0
+   je   BST_D_N_15
+   mov  qword[rax], rcx        ; set new parent
+
+BST_D_N_15:
+   mov  rax, win64_rss1        ; rax = pptr to new node
+   mov  qword[rax], rcx
+
+BST_D_N_16:
+   mov  rcx, r9                ; rcx = node to delete
+   call free
    jmp  BST_D_N_RET_0
 
-BST_D_N_RET_3:
-   mov  rax, 3                 ; rax = 3 ( not found )
+BST_D_N_RET_2:
+   mov  rax, 2                 ; rax = 2 ( not found )
    jmp  BST_D_N_X
 
 BST_D_N_RET_1:
@@ -1600,12 +1678,12 @@ BST_D_N_X:
 ;
 ; Returns
 ;    eax
-;       = 0 if successful, otherwise err code
+;       = 0 if successful
 ;       = 1 if parameter error
 ;
 ; Notes
-;    After all the nodes have been deleted from the search
-;    tree the root node ptr is deleted and set to null
+;    After all the nodes have been deleted from the tree
+;    the root node ptr is deleted and set to null
 ;
 binarytree_delete_tree:
    push rbp                    ; set up stack frame
@@ -1613,13 +1691,13 @@ binarytree_delete_tree:
    sub  rsp, 48                ; create SLV and RSS
 
    cmp  rcx, 0
-   je   BST_D_T_RET_1          ; if pptr == null then return param error
+   je   BST_D_T_RET_1          ; if pptr == null return param error
 
    mov  qword win64_rss1, rcx  ; save pptr to root
 
    mov  rcx, [rcx]             ; rcx = ptr to root node
    cmp  rcx, 0
-   je   BST_D_T_RET_1          ; if ptr == null then return param error
+   je   BST_D_T_RET_1          ; if ptr == null return param error
 
    mov  qword slv_proot, rcx   ; save ptr
 
