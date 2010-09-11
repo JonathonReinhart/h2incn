@@ -29,6 +29,9 @@
 ; /* if desired - convert from a 32-bit to 16-bit hash */
 ; hash = ((hash >> 16) ^ (hash & 0xFFFF));
 ;
+; uncomment the following line to get FNV1A behavior
+
+%define FNV1A 1
 
 [section .text]
 
@@ -50,25 +53,27 @@ _FNV1Hash:
    push esi                    ; save registers used
    push edi
    push ebx
-   push ecx
-   push edx
 
-   mov  esi, buffer            ;esi = ptr to buffer
-   mov  ecx, len               ;ecx = length of buffer (counter)
-   mov  eax, offset_basis      ;set to 2166136261 for FNV-1
-   mov  edi, 1000193h          ;FNV_32_PRIME = 16777619
-   xor  ebx, ebx               ;ebx = 0
+   mov  esi, buffer            ; esi = ptr to buffer
+   mov  ecx, len               ; ecx = length of buffer (counter)
+   mov  eax, offset_basis      ; set to 2166136261 for FNV-1
+   mov  edi, 1000193h          ; FNV_32_PRIME = 16777619
+   xor  ebx, ebx               ; ebx = 0
 nextbyte:
-   mul  edi                    ;eax = eax * FNV_32_PRIME
-   mov  bl, [esi]              ;bl = byte from esi
-   xor  eax, ebx               ;al = al xor bl
-   inc  esi                    ;esi = esi + 1 (buffer pos)
-   dec  ecx                    ;ecx = ecx - 1 (counter)
-   jnz  nextbyte               ;if ecx != 0, jmp to NextByte
+%ifdef FNV1A
+   mov  bl, byte[esi]          ; bl = byte from esi
+   xor  eax, ebx               ; al = al xor bl
+   mul  edi                    ; eax = eax * FNV_32_PRIME
+%else
+   mul  edi                    ; eax = eax * FNV_32_PRIME
+   mov  bl, byte[esi]          ; bl = byte from esi
+   xor  eax, ebx               ; al = al xor bl
+%endif
+   inc  esi                    ; esi = esi + 1 (buffer pos)
+   dec  ecx                    ; ecx = ecx - 1 (counter)
+   jnz  nextbyte               ; if ecx != 0, jmp to nextbyte
 
-   pop  edx                    ; restore registers
-   pop  ecx
-   pop  ebx
+   pop  ebx                    ; restore registers
    pop  edi
    pop  esi
    mov  esp, ebp               ; restore stack frame
@@ -92,8 +97,8 @@ nextbyte:
 global FNV1Hash
 
 FNV1Hash:
-   xchg rcx, rdx               ;rcx = length of buffer
-   xchg r8, rdx                ;r8 = ptr to buffer
+   xchg rcx, rdx               ; rcx = length of buffer
+   xchg r8, rdx                ; r8 = ptr to buffer
 
 %elifidni __OUTPUT_FORMAT__,elf64
 
@@ -110,18 +115,24 @@ _FNV1Hash:
 
 %endif
 
-   mov  rax, rdx               ;rax = offset_basis - set to 14695981039346656037 for FNV-1
-   mov  r9, 100000001B3h       ;r9 = FNV_64_PRIME = 1099511628211
-   mov  r10, rbx               ;r10 = saved copy of rbx
-   xor  rbx, rbx               ;rbx = 0
+   mov  rax, rdx               ; rax = offset_basis - set to 14695981039346656037 for FNV-1
+   mov  r9, 100000001B3h       ; r9 = FNV_64_PRIME = 1099511628211
+   mov  r10, rbx               ; r10 = saved copy of rbx
+   xor  rbx, rbx               ; rbx = 0
 nextbyte:
-   mul  r9                     ;rax = rax * FNV_64_PRIME
-   mov  bl, [r8]               ;bl = byte from r8
-   xor  rax, rbx               ;al = al xor bl
-   inc  r8                     ;inc buffer pos
-   dec  rcx                    ;rcx = rcx - 1 (counter)
-   jnz  nextbyte               ;if rcx != 0, jmp to nextbyte
-   mov  rbx, r10               ;restore rbx
-   ret                         ;rax = fnv1 hash
+%ifdef FNV1A
+   mov  bl, byte[r8]           ; bl = byte from r8
+   xor  rax, rbx               ; al = al xor bl
+   mul  r9                     ; rax = rax * FNV_64_PRIME
+%else
+   mul  r9                     ; rax = rax * FNV_64_PRIME
+   mov  bl, byte[r8]           ; bl = byte from r8
+   xor  rax, rbx               ; al = al xor bl
+%endif
+   inc  r8                     ; inc buffer pos
+   dec  rcx                    ; rcx = rcx - 1 (counter)
+   jnz  nextbyte               ; if rcx != 0, jmp to nextbyte
+   mov  rbx, r10               ; restore rbx
+   ret                         ; rax = fnv1 hash
 
 %endif
