@@ -10,6 +10,42 @@
 #include <malloc.h>
 #include "hashmap.h"
 
+/*
+
+unsigned int hash16(unsigned char* p, unsigned int len)
+
+Purpose
+   To calculate a 16-bit hash of a buffer of memory
+
+Params
+   p - ptr to memory
+   len - length of buffer to sum
+
+Returns
+   a 16-bit hash
+
+Notes
+   This is a modified version of the Fletcher hash algorithm
+
+*/
+unsigned int hash16(unsigned char* buf, unsigned int len)
+{
+   register short int sum1;
+   register unsigned int sum2;
+   register unsigned char* p;
+
+   sum2 = sum1 = 0;
+   p = buf;
+   while (len--)
+   {
+      sum1 += *p++;
+      if (sum1 >= 255) sum1 -= 255;
+      sum2 += sum1;
+   }
+   sum2 %= 255;
+   return ( (sum2 << 8) | sum1 );
+}
+
 /***********************************************************
 
 hash_map_t* hash_map_alloc(unsigned int buckets)
@@ -78,11 +114,15 @@ struct bst_node_t* hash_map_find(struct hash_map_t* pHashMap, void *key, unsigne
    unsigned int hash;
    struct bst_node_t** root;
 
+#if 0
    /* compute the 32-bit hash value of key */
    hash = FNV1Hash(key, klen, 2166136261);
 
    /* xor-fold into 16-bit value */
    hash = (((hash >> 16) ^ hash) & pHashMap->buckets);
+#endif
+
+   hash = hash16(key, klen) & pHashMap->buckets;
 
    root = (struct bst_node_t**)((char*)(((char*)pHashMap) + sizeof(struct hash_map_t)) + (hash * sizeof(void*)));
 
@@ -122,11 +162,15 @@ int hash_map_insert(struct hash_map_t* pHashMap, void *key, unsigned int klen, c
    static int cInserts = 0;
 #endif
 
+#if 0
    /* compute the 32-bit hash value of key */
    hash = FNV1Hash(key, klen, 2166136261);
 
    /* xor-fold into 16-bit value */
    hash = (((hash >> 16) ^ hash) & pHashMap->buckets);
+#endif
+
+   hash = hash16(key, klen) & pHashMap->buckets;
 
    node = binarytree_alloc_node(key, klen, value, vlen);
    if ( !node )
@@ -180,11 +224,15 @@ int hash_map_delete(struct hash_map_t* pHashMap, void *key, unsigned int klen)
    unsigned int hash;
    struct bst_node_t** root;
 
+#if 0
    /* compute the 32-bit hash value of key */
    hash = FNV1Hash(key, klen, 2166136261);
 
    /* xor-fold into 16-bit value */
    hash = (((hash >> 16) ^ hash) & pHashMap->buckets);
+#endif
+
+   hash = hash16(key, klen) & pHashMap->buckets;
 
    root = (struct bst_node_t**)((char*)(((char*)pHashMap) + sizeof(struct hash_map_t)) + (hash * sizeof(void*)));
 

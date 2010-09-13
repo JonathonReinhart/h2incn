@@ -43,4 +43,4 @@ typedef struct options_t {
 
 extern struct options_t options;
 
-#endif // ifndef __H2INCN_INCLUDED__
+#endif /* ifndef __H2INCN_INCLUDED__ */

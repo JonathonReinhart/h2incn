@@ -1279,21 +1279,90 @@ int h2incn_read(struct parser_t *parser)
    return bSuccess;
 }
 
+/* #define BINTREE_TEST */
+#ifdef BINTREE_TEST
+/* This code is only used to test the binary tree functions and should
+   not normally be included in the compilation of the program.
+*/
+int binarytree_test(void)
+{
+   struct bst_node_t *root;
+   struct bst_node_t *node;
+   int err;
+   char* p;
+   char* pchars =    "JKGHIAROBNEFLCDWXUVSTPQYZ";
+   char* pdelchars = "STUVOPQRIJKLWXYHCDEFGNZAB";
+
+   /* establish a root */
+   p = pchars;
+   root = binarytree_alloc_node(p, 1, (void*)0, 0);
+   if ( !root )
+   {
+      printf("\nbinarytree_test: error: insufficient memory\n");
+      return 0;
+   }
+
+   /* add in data to binary tree */
+   p++;
+   while ( *p != 0 )
+   {
+      node = binarytree_alloc_node(p, 1,  (void*)0, 0);
+      if ( !node )
+      {
+         printf("\nbinarytree_test: error: insufficient memory\n");
+         return 0;
+      }
+      if ( err = binarytree_insert_node(&root, node) )
+      {
+         printf("\nbinarytree_insert_node: error %d\n", err);
+         return 0;
+      }
+      p++;
+   }
+
+   p = pdelchars;
+   while ( *p != 0 )
+   {
+      node = binarytree_find_node(&root, p, 1);
+      if ( !node )
+      {
+         printf("\nbinarytree_find_node: error: node not found!\n");
+         return 0;
+      }
+      if ( err = binarytree_delete_node(&root, p, 1) )
+      {
+         printf("\nbinarytree_delete_node: error %d\n", err);
+         return 0;
+      }
+      node = binarytree_find_node(&root, p, 1);
+      if ( node )
+      {
+         printf("\nbinarytree_find_node: error: found previously deleted node!\n");
+         return 0;
+      }
+
+      p++;
+   }
+
+   return 1;
+}
+#endif /* ifdef BINTREE_TEST */
+
 int main(int argc, char **argv)
 {
    struct parser_t *parser;
    char *tptr;
    int bSuccess;
-   int hash, len;
 
    print_copyright();
    parse_cmdln(argc, argv);
-#if 0
-   print_options_debug();
-#endif
 
-   len = (int)strlen(options.pInFileName);
-   hash = FNV1Hash(options.pInFileName, len, 2166136261);
+#ifdef BINTREE_TEST
+   if ( !binarytree_test() )
+      return 1;
+   printf("binarytree_test: info: completed\n");
+   return 0;
+#endif
 
    parser = malloc(sizeof(struct parser_t));
    if ( !parser )
