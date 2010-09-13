@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<VisualStudioToolFile
+	Name="Netwide Macro Assembler"
+	Version="2.09"
+	>
+	<Rules>
+		<CustomBuildRule
+			Name="NASM"
+			DisplayName="Netwide Macro Assembler"
+			CommandLine="nasm.exe [AllOptions] -Xvc [AdditionalOptions] [Inputs]"
+			Outputs="[$ObjectFileName]"
+			FileExtensions="*.asm"
+			ExecutionDescription="Assembling..."
+			>
+			<Properties>
+				<EnumProperty
+					Name="SpecifyOutputFileFormat"
+					DisplayName="Specify Output File Format"
+					Description="Specify Output File Format.  (-f [elf32 | elf64 | win32 | win64])"
+					HelpURL="http://www.nasm.us/doc/nasmdoc2.html#section-2.1.2"
+					DefaultValue="2"
+					>
+					<Values>
+						<EnumValue
+							Value="0"
+							Switch="-f elf32"
+							DisplayName="-f elf32"
+						/>
+						<EnumValue
+							Value="1"
+							Switch="-f elf64"
+							DisplayName="-f elf64"
+						/>
+						<EnumValue
+							Value="2"
+							Switch="-f win32"
+							DisplayName="-f win32"
+						/>
+						<EnumValue
+							Value="3"
+							Switch="-f win64"
+							DisplayName="-f win64"
+						/>
+					</Values>
+				</EnumProperty>
+				<StringProperty
+					Name="ObjectFileName"
+					DisplayName="Object File Name"
+					PropertyPageName="Object File"
+					Description="Specifies the name of the output object file.     (-o [file])"
+					HelpURL="http://www.nasm.us/doc/nasmdoc2.html#section-2.1.1"
+					Switch="-o &quot;[value]&quot;"
+					DefaultValue="$(IntDir)\$(InputName).obj"
+				/>
+				<StringProperty
+					Name="PreprocessorDefinitions"
+					DisplayName="Preprocessor Definitions"
+					Description="Defines a text macro with the given name.     (-d[symbol])"
+					HelpURL="http://www.nasm.us/doc/nasmdoc2.html#section-2.1.18"
+					Switch="-d[value]"
+					Delimited="false"
+					Inheritable="true"
+				/>
+				<StringProperty
+					Name="UndefinePreprocessorDefinitions"
+					DisplayName="Undefine Preprocessor Definitions"
+					Description="Undefines a text macro with the given name.     (-u[symbol])"
+					HelpURL="http://www.nasm.us/doc/nasmdoc2.html#section-2.1.19"
+					Switch="-u[value]"
+					Delimited="false"
+					Inheritable="true"
+				/>
+				<StringProperty
+					Name="AssembledCodeListingFile"
+					DisplayName="Assembly Listing File"
+					PropertyPageName="Listing File"
+					Description="Generates an assembly code listing file.     (-l [file])"
+					HelpURL="http://www.nasm.us/doc/nasmdoc2.html#section-2.1.3"
+					Switch="-l &quot;[value]&quot;"
+				/>
+				<StringProperty
+					Name="IncludePaths"
+					DisplayName="Include Paths"
+					Description="Sets path for include file.     (-i[path])"
+					HelpURL="http://www.nasm.us/doc/nasmdoc2.html#section-2.1.16"
+					Switch="-i[value]"
+					Delimited="false"
+					Inheritable="true"
+				/>
+				<BooleanProperty
+					Name="TreatWarningsAsErrors"
+					DisplayName="Treat Warnings As Errors"
+					Description="Returns an error code if warnings are generated.     (-Werror)"
+					HelpURL="http://www.nasm.us/doc/nasmdoc2.html#section-2.1.24"
+					Switch="-Werror"
+				/>
+				<BooleanProperty
+					Name="GenerateDebugInformation"
+					DisplayName="Generate Debug Information"
+					Description="Generates Debug Information.     (-g)"
+					HelpURL="http://www.nasm.us/doc/nasmdoc2.html#section-2.1.12"
+					Switch="-g"
+					DefaultValue="false"
+				/>
+				<BooleanProperty
+					Name="EnableTasmCompatibilityMode"
+					DisplayName="Enable Tasm Compatibility Mode"
+					Description="Enable Tasm Compatibility Mode.     (-t)"
+					HelpURL="http://www.nasm.us/doc/nasmdoc2.html#section-2.1.23"
+					Switch="-t"
+					DefaultValue="false"
+				/>
+				<EnumProperty
+					Name="MultiPassOptimization"
+					DisplayName="Multi-Pass Optimization"
+					Description="Level of Optimization.     (-O0, -O1, -Ox)"
+					HelpURL="http://www.nasm.us/doc/nasmdoc2.html#section-2.1.22"
+					DefaultValue="0"
+					>
+					<Values>
+						<EnumValue
+							Value="0"
+							Switch="-O0"
+							DisplayName="No optimization (-O0)"
+						/>
+						<EnumValue
+							Value="1"
+							Switch="-O1"
+							DisplayName="Minimal optimization (-O1)"
+						/>
+						<EnumValue
+							Value="2"
+							Switch="-Ox"
+							DisplayName="Multipass optimization (-Ox)"
+						/>
+					</Values>
+				</EnumProperty>
+			</Properties>
+		</CustomBuildRule>
+	</Rules>
+</VisualStudioToolFile>
