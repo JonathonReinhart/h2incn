@@ -39,6 +39,8 @@
 #include "hashmap.h"
 
 
+#define SUPPORT_TYPEDEFS    0
+
 static int h2incn_read(struct parser_t *parser);
 
 static struct options_t options;
@@ -1154,15 +1156,13 @@ static int h2incn_parse(struct parser_t *parser)
       }
       else
       {
-#if 0
-         if ( !memcmp(head, "typedef ", 8) )
+         if ( SUPPORT_TYPEDEFS && !memcmp(head, "typedef ", 8) )
          {
             if ( !h2incn_parse_typedef(parser) )
                return 0;
          }
          else
          {
-#endif
             tail = head;
             while ( ( *tail != 0 ) && ( *tail != '\r' ) && ( *tail != '\n' ) ) tail++;
             if ( *tail == '\r')
@@ -1180,9 +1180,7 @@ static int h2incn_parse(struct parser_t *parser)
                fwrite(head, 1, tail-head, parser->pOutFile);
             }
             parser->pNextToken = tail;
-#if 0
          }
-#endif
       }
    }
 
