@@ -10,6 +10,8 @@
 #include <malloc.h>
 #include "hashmap.h"
 
+#define HASH_MAP_MAGIC  0x6d686470  // 'pdhm'
+
 /*
 
 unsigned int hash16(unsigned char* p, unsigned int len)
@@ -87,7 +89,7 @@ struct hash_map_t* hash_map_alloc(unsigned int buckets)
    if ( pHashMap )
    {
       memset(pHashMap, 0, len);
-      pHashMap->magic   = 'pdhm';
+      pHashMap->magic   = HASH_MAP_MAGIC;
       pHashMap->buckets = buckets;
    }
    return pHashMap;
@@ -264,7 +266,7 @@ int hash_map_free(struct hash_map_t *pHashMap)
    if ( !pHashMap )
       return 1;  /* param error */
 
-   if ( pHashMap->magic != 'pdhm' )
+   if ( pHashMap->magic != HASH_MAP_MAGIC )
       return 1;  /* param error */
 
    for ( i = 0; i < pHashMap->buckets; i++ )
