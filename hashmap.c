@@ -153,7 +153,7 @@ Notes
    Duplicate keys are not supported.
 
 */
-int hash_map_insert(struct hash_map_t* pHashMap, void *key, unsigned int klen, char *value, unsigned int vlen)
+int hash_map_insert(struct hash_map_t* pHashMap, void *key, unsigned int klen, void *value, unsigned int vlen)
 {
    unsigned int hash;
    struct bst_node_t *node;
