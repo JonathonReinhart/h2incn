@@ -16,7 +16,7 @@
 
 extern struct list_t *pFileList;
 
-typedef struct parser_t {
+struct parser_t {
    struct parser_t *pPrevParser;
    char *pFileName;
    char *pFileBuffer;
@@ -27,7 +27,7 @@ typedef struct parser_t {
    FILE *pOutFile;
 };
 
-typedef struct options_t {
+struct options_t {
    char *pInFileName;
    char *pOutFileName;
    char *pDefines;

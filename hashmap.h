@@ -21,7 +21,7 @@ struct bst_node_t {
    unsigned int vlen;
 };
 
-typedef struct hash_map_t {
+struct hash_map_t {
    unsigned int magic;
    unsigned int buckets;
 };
