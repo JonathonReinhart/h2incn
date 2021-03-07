@@ -76,16 +76,16 @@
 ; 32-bit C calling convention
 ;
 
-extern _malloc
-extern _memcmp
-extern _memcpy
-extern _free
+extern malloc
+extern memcmp
+extern memcpy
+extern free
 
-global _binarytree_alloc_node
-global _binarytree_find_node
-global _binarytree_insert_node
-global _binarytree_delete_node
-global _binarytree_delete_tree
+global binarytree_alloc_node
+global binarytree_find_node
+global binarytree_insert_node
+global binarytree_delete_node
+global binarytree_delete_tree
 
 ;
 ; Paramaters and Stack Local Variables (SLV)
@@ -118,7 +118,7 @@ global _binarytree_delete_tree
 ; Notes
 ;    Params value and vlen may be null or zero
 ;
-_binarytree_alloc_node:
+binarytree_alloc_node:
    push ebp                    ; set up stack frame
    mov  ebp, esp
    push esi                    ; save registers used
@@ -140,7 +140,7 @@ _binarytree_alloc_node:
    add  eax, ebx               ;     + key length
    add  eax, ecx               ;     + value length
    push eax
-   call _malloc
+   call malloc
    add  esp, 4
    cmp  eax, 0
    je   BST_A_N_X              ; if eax == 0 jmp to exit
@@ -165,7 +165,7 @@ _binarytree_alloc_node:
    push ebx                    ; push params
    push esi
    push eax
-   call _memcpy
+   call memcpy
    add  esp, 12
 
    ;
@@ -187,7 +187,7 @@ _binarytree_alloc_node:
    push ecx                    ; push params
    push esi
    push eax
-   call _memcpy
+   call memcpy
    add  esp, 12
 
 BST_A_N_X:
@@ -218,7 +218,7 @@ BST_A_N_X:
 ;
 ; Notes
 ;
-_binarytree_find_node:
+binarytree_find_node:
    push ebp                    ; set up stack frame
    mov  ebp, esp
    push esi                    ; save registers used
@@ -257,7 +257,7 @@ BST_F_N_1:
    mov  eax, dword[edi + _bst_node_t.key]
    push eax
    push esi
-   call _memcmp
+   call memcmp
    add  esp, 12
    cmp  eax, 0
    je   BST_F_N_5
@@ -274,7 +274,7 @@ BST_F_N_3:
    push ebx
    push esi
    push edi
-   call _binarytree_find_node
+   call binarytree_find_node
    add  esp, 12
    jmp  BST_F_N_X
 
@@ -324,7 +324,7 @@ BST_F_N_X:
 ;    that compares to the node param key is replaced with the new node
 ;    and the old node is deleted.  Duplicate nodes are not supported.
 ;
-_binarytree_insert_node:
+binarytree_insert_node:
    push ebp                    ; set up stack frame
    mov  ebp, esp
    push esi                    ; save registers used
@@ -367,7 +367,7 @@ BST_I_N_2:
    push eax
    mov  eax, dword[esi + _bst_node_t.key]
    push eax
-   call _memcmp
+   call memcmp
    add  esp, 12
    cmp  eax, 0
    je   BST_I_N_8
@@ -384,7 +384,7 @@ BST_I_N_3:
 BST_I_N_4:
    push esi
    push edi
-   call _binarytree_insert_node
+   call binarytree_insert_node
    add  esp, 8
    jmp  BST_I_N_X
 
@@ -442,7 +442,7 @@ BST_I_N_10:
 BST_I_N_11:
    ; safe to free old node in edi
    push edi
-   call _free
+   call free
    pop  eax
    jmp  BST_I_N_RET_0
 
@@ -481,7 +481,7 @@ BST_I_N_X:
 ;    If the only node in the tree is the root node and it compares
 ;    to the key param it is deleted and will be set to null
 ;
-_binarytree_delete_node:
+binarytree_delete_node:
    push ebp                    ; set up stack frame
    mov  ebp, esp
    push esi                    ; save registers used
@@ -520,7 +520,7 @@ BST_D_N_1:
    mov  eax, dword[edi + _bst_node_t.key]
    push eax
    push esi
-   call _memcmp
+   call memcmp
    pop  esi                    ; reload registers
    pop  edi
    mov  edi, ebx
@@ -540,7 +540,7 @@ BST_D_N_3:
    push edx
    push esi
    push edi
-   call _binarytree_delete_node
+   call binarytree_delete_node
    add  esp, 12
    jmp  BST_D_N_X              ; eax = error code
 
@@ -661,7 +661,7 @@ BST_D_N_15:
 
 BST_D_N_16:
    push edi
-   call _free
+   call free
    add  esp, 4
    jmp  BST_D_N_RET_0
 
@@ -703,7 +703,7 @@ BST_D_N_X:
 ;    After all the nodes have been deleted from the
 ;    tree the root node ptr is deleted and set to null
 ;
-_binarytree_delete_tree:
+binarytree_delete_tree:
    push ebp
    mov  ebp, esp
    push edi                    ; save registers used
@@ -722,7 +722,7 @@ _binarytree_delete_tree:
    je   BST_D_T_1
 
    push edi
-   call _binarytree_delete_tree
+   call binarytree_delete_tree
    pop  edi
 
 BST_D_T_1:
@@ -732,14 +732,14 @@ BST_D_T_1:
    je   BST_D_T_2
 
    push edi
-   call _binarytree_delete_tree
+   call binarytree_delete_tree
    pop  eax
 
 BST_D_T_2:
    mov  edi, dword param1      ; edi = pptr to root
    mov  eax, [edi]             ; eax = root ptr
    push eax
-   call _free
+   call free
    pop  eax
 
    mov  dword[edi], 0          ; pptr = null
@@ -778,16 +778,16 @@ BST_D_T_X:
 %define slv_value [rbp-48]
 %define slv_vlen  [rbp-56]
 
-extern _malloc
-extern _memcmp
-extern _memcpy
-extern _free
+extern malloc
+extern memcmp
+extern memcpy
+extern free
 
-global _binarytree_alloc_node
-global _binarytree_find_node
-global _binarytree_insert_node
-global _binarytree_delete_node
-global _binarytree_delete_tree
+global binarytree_alloc_node
+global binarytree_find_node
+global binarytree_insert_node
+global binarytree_delete_node
+global binarytree_delete_tree
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
@@ -810,7 +810,7 @@ global _binarytree_delete_tree
 ; Notes
 ;    Params value and vlen may be null/zero if using the binary tree for keys only
 ;
-_binarytree_alloc_node:
+binarytree_alloc_node:
    push rbp                    ; create stack frame
    mov  rbp, rsp
    sub  rsp, 64                ; create SLV
@@ -832,7 +832,7 @@ _binarytree_alloc_node:
    mov  rdi, _bst_node_t_size  ; rdi = sizeof(_bst_node_t)
    add  rdi, rsi               ;       + key length
    add  rdi, rcx               ;       + value length
-   call _malloc
+   call malloc
    cmp  rax, 0
    je   BST_A_N_X
 
@@ -857,7 +857,7 @@ _binarytree_alloc_node:
    mov  rsi, qword slv_key     ; rsi = ptr to user key buffer
    mov  rdx, qword slv_klen    ; rdx = key length
    mov  dword[r10+_bst_node_t.klen], edx
-   call _memcpy
+   call memcpy
 
    mov  rax, qword slv_pnode   ; reload node ptr
 
@@ -875,7 +875,7 @@ _binarytree_alloc_node:
    add  rdi, qword slv_klen    ; rdi = ptr to node value buffer
    mov  qword[rax+_bst_node_t.value],rdi
    mov  dword[rax+_bst_node_t.vlen], edx
-   call _memcpy
+   call memcpy
 
    mov  rax, qword slv_pnode   ; reload node ptr
 
@@ -903,7 +903,7 @@ BST_A_N_X:
 ;
 ; Notes
 ;
-_binarytree_find_node:
+binarytree_find_node:
    push rbp                    ; set up stack frame
    mov  rbp, rsp
    sub  rsp, 64                ; create SLV and RSS
@@ -939,7 +939,7 @@ BST_F_N_1:
    ; compare user key to this nodes key
    mov  rsi, qword[rdi + _bst_node_t.key]
    mov  rdi, qword slv_key
-   call _memcmp
+   call memcmp
    mov  rdi, qword slv_pnode   ; rdi = root node ptr
    cmp  eax, 0
    je   BST_F_N_5
@@ -956,7 +956,7 @@ BST_F_N_2:
 BST_F_N_3:
    mov  rsi, qword slv_key
    mov  rdx, qword slv_klen
-   call _binarytree_find_node
+   call binarytree_find_node
    jmp  BST_F_N_X
 
 BST_F_N_4:
@@ -1005,7 +1005,7 @@ BST_F_N_X:
 ;    that compares to the node param key is replaced with the new node
 ;    and the old node is deleted.  Duplicate nodes are not supported.
 ;
-_binarytree_insert_node:
+binarytree_insert_node:
    push rbp                    ; set up stack frame
    mov  rbp, rsp
    sub  rsp, 32                ; create SLV
@@ -1044,7 +1044,7 @@ BST_I_N_2:
    ; compare user key to this nodes key
    mov  rdi, qword[rsi + _bst_node_t.key]
    mov  rsi, qword[rax + _bst_node_t.key]
-   call _memcmp
+   call memcmp
    mov  rdi, qword slv_proot   ; rdi = root ptr
    mov  rsi, qword slv_pnode   ; rsi = node ptr
    cmp  eax, 0
@@ -1060,7 +1060,7 @@ BST_I_N_3:
    add  rdi, _bst_node_t.left  ; rdi = address of node.left
 
 BST_I_N_4:
-   call _binarytree_insert_node
+   call binarytree_insert_node
    jmp  BST_I_N_X              ; rax = error code
 
 BST_I_N_5:
@@ -1118,7 +1118,7 @@ BST_I_N_10:
 
 BST_I_N_11:
    ; safe to free old node in rdi
-   call _free
+   call free
    jmp  BST_I_N_RET_0
 
 BST_I_N_RET_1:
@@ -1155,7 +1155,7 @@ BST_I_N_X:
 ;    If the only node in the tree is the root node and it compares
 ;    to the key param it is deleted and will be set to null
 ;
-_binarytree_delete_node:
+binarytree_delete_node:
    push rbp                    ; set up stack frame
    mov  rbp, rsp
    sub  rsp, 64                ; create SLV
@@ -1191,7 +1191,7 @@ BST_D_N_1:
    ; compare user key to this nodes key
    xchg rdi, rsi
    mov  rsi, qword[rsi + _bst_node_t.key]
-   call _memcmp
+   call memcmp
    mov  rdi, qword slv_pnode   ; rdi = node ptr
    mov  rdx, qword slv_klen
    cmp  eax, 0
@@ -1207,7 +1207,7 @@ BST_D_N_2:
 
 BST_D_N_3:
    mov  rsi, qword slv_key
-   call _binarytree_delete_node
+   call binarytree_delete_node
    jmp  BST_D_N_X              ; rax = error code
 
 BST_D_N_4:
@@ -1331,7 +1331,7 @@ BST_D_N_15:
 
 BST_D_N_16:
    mov  rdi, r9                ; rdi = node to delete
-   call _free
+   call free
    jmp  BST_D_N_RET_0
 
 BST_D_N_RET_2:
@@ -1370,7 +1370,7 @@ BST_D_N_X:
 ;    After all the nodes have been deleted from the tree
 ;    the root node ptr is deleted and set to null
 ;
-_binarytree_delete_tree:
+binarytree_delete_tree:
    push rbp                    ; set up stack frame
    mov  rbp, rsp
    sub  rsp, 32                ; create SLV
@@ -1391,7 +1391,7 @@ _binarytree_delete_tree:
    cmp  rax, 0
    je   BST_D_T_1
 
-   call _binarytree_delete_tree
+   call binarytree_delete_tree
 
 BST_D_T_1:
    mov  rdi, qword slv_proot   ; rdi = ptr to root
@@ -1400,11 +1400,11 @@ BST_D_T_1:
    cmp  rax, 0
    je   BST_D_T_2
 
-   call _binarytree_delete_tree
+   call binarytree_delete_tree
 
 BST_D_T_2:
    mov  rdi, qword slv_proot   ; rdi = ptr to node
-   call _free                  ; free node ptr
+   call free                  ; free node ptr
    mov  rax, qword slv_pptr    ; rax = pptr to root
    mov  qword[rax],0           ; set ptr to null
    jmp  BST_D_T_RET_0
