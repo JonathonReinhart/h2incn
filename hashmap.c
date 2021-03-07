@@ -30,7 +30,7 @@ Notes
    This is a modified version of the Fletcher hash algorithm
 
 */
-unsigned int hash16(unsigned char* buf, unsigned int len)
+static unsigned int hash16(unsigned char* buf, unsigned int len)
 {
    register short int sum1;
    register unsigned int sum2;

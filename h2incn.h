@@ -41,6 +41,4 @@ struct options_t {
        fVerbose: 1;
 };
 
-extern struct options_t options;
-
 #endif /* ifndef __H2INCN_INCLUDED__ */

@@ -38,29 +38,18 @@
 #include "h2incn.h"
 #include "hashmap.h"
 
-int h2incn_parse(struct parser_t *parser);
-int h2incn_read(struct parser_t *parser);
 
-struct options_t options;
+static int h2incn_read(struct parser_t *parser);
+
+static struct options_t options;
 
 /* a maintained list of include filenames to prevent endless recursion */
-struct hash_map_t *pHeadersMap;
+static struct hash_map_t *pHeadersMap;
 
 /* used to map defines for quick access */
-struct hash_map_t *pDefinesMap;
+static struct hash_map_t *pDefinesMap;
 
-char* reserved_words[] = {
-   "include",
-   "define",
-   "undef",
-   "if",
-   "ifdef",
-   "ifndef",
-   "else"
-   "endif"
-};
-
-void print_usage(void)
+static void print_usage(void)
 {
    printf("\nh2incn v%d.%d.%d\nCopyright (C)2010 Piranha Designs, LLC - All rights reserved.\n\n",
       __H2INCN_VERSION_MAJOR__,
@@ -84,7 +73,7 @@ void print_usage(void)
       "\n");
 }
 
-void print_license(void)
+static void print_license(void)
 {
    printf(
       "Redistribution and use in source and binary forms, with or without\n"
@@ -113,7 +102,7 @@ void print_license(void)
       "EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n");
 }
 
-void h2incn_print_err(struct parser_t *parser, char* funcname, char* errmsg)
+static void h2incn_print_err(struct parser_t *parser, char* funcname, char* errmsg)
 {
    char *tail;
 
@@ -125,7 +114,7 @@ void h2incn_print_err(struct parser_t *parser, char* funcname, char* errmsg)
    printf("(%s::%d) %s: %s\n", parser->pFileName, parser->iLineNum, funcname, errmsg);
 }
 
-void parse_cmdln(int argc, char **argv)
+static void parse_cmdln(int argc, char **argv)
 {
    int i, cmd;
 
@@ -205,7 +194,7 @@ void parse_cmdln(int argc, char **argv)
    }
 }
 
-int h2incn_parse_comment(struct parser_t *parser)
+static int h2incn_parse_comment(struct parser_t *parser)
 {
    char *head;
    char *tail;
@@ -328,7 +317,7 @@ int h2incn_parse_comment(struct parser_t *parser)
 }
 
 
-int h2incn_parse_include(struct parser_t *parser)
+static int h2incn_parse_include(struct parser_t *parser)
 {
    char *head;
    char *tail;
@@ -419,7 +408,7 @@ int h2incn_parse_include(struct parser_t *parser)
 
 }
 
-int h2incn_parse_struct(struct parser_t *parser)
+static int h2incn_parse_struct(struct parser_t *parser)
 {
    char *head;
    char *tail;
@@ -539,7 +528,7 @@ int h2incn_parse_struct(struct parser_t *parser)
 }
 
 
-int h2incn_parse_typedef(struct parser_t *parser)
+static int h2incn_parse_typedef(struct parser_t *parser)
 {
    char *head;
    char *tail;
@@ -670,7 +659,7 @@ int h2incn_parse_typedef(struct parser_t *parser)
 }
 
 
-int h2incn_parse_define(struct parser_t *parser)
+static int h2incn_parse_define(struct parser_t *parser)
 {
    char *head;
    char *tail;
@@ -800,7 +789,7 @@ int h2incn_parse_define(struct parser_t *parser)
 }
 
 
-int h2incn_parse_if(struct parser_t *parser)
+static int h2incn_parse_if(struct parser_t *parser)
 {
    char *head;
    char *tail;
@@ -836,7 +825,7 @@ int h2incn_parse_if(struct parser_t *parser)
    return 1;
 }
 
-int h2incn_parse_ifdef(struct parser_t *parser)
+static int h2incn_parse_ifdef(struct parser_t *parser)
 {
    char *head;
    char *tail;
@@ -872,7 +861,7 @@ int h2incn_parse_ifdef(struct parser_t *parser)
    return 1;
 }
 
-int h2incn_parse_ifndef(struct parser_t *parser)
+static int h2incn_parse_ifndef(struct parser_t *parser)
 {
    char *head;
    char *tail;
@@ -908,7 +897,7 @@ int h2incn_parse_ifndef(struct parser_t *parser)
    return 1;
 }
 
-int h2incn_parse_elif(struct parser_t *parser)
+static int h2incn_parse_elif(struct parser_t *parser)
 {
    char *head;
    char *tail;
@@ -945,7 +934,7 @@ int h2incn_parse_elif(struct parser_t *parser)
 }
 
 
-int h2incn_parse_else(struct parser_t *parser)
+static int h2incn_parse_else(struct parser_t *parser)
 {
    char *head;
    int bSuccess;
@@ -974,7 +963,7 @@ int h2incn_parse_else(struct parser_t *parser)
 }
 
 
-int h2incn_parse_endif(struct parser_t *parser)
+static int h2incn_parse_endif(struct parser_t *parser)
 {
    char *head;
    int bSuccess;
@@ -1003,7 +992,7 @@ int h2incn_parse_endif(struct parser_t *parser)
 }
 
 
-int h2incn_parse_undef(struct parser_t *parser)
+static int h2incn_parse_undef(struct parser_t *parser)
 {
    char *head;
    char *tail;
@@ -1043,7 +1032,7 @@ int h2incn_parse_undef(struct parser_t *parser)
    Returns
       0 if error, otherwise 1
 */
-int h2incn_parse(struct parser_t *parser)
+static int h2incn_parse(struct parser_t *parser)
 {
    char *head;
    char *tail;
