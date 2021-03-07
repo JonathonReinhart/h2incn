@@ -872,7 +872,7 @@ _binarytree_alloc_node:
    je   BST_A_N_X
    mov  rdi, rax               ; rdi = ptr to node
    add  rdi, _bst_node_t_size  ; rdi = ptr to node key buffer
-   add  rdi, dword slv_klen    ; rdi = ptr to node value buffer
+   add  rdi, qword slv_klen    ; rdi = ptr to node value buffer
    mov  qword[rax+_bst_node_t.value],rdi
    mov  dword[rax+_bst_node_t.vlen], edx
    call _memcpy
