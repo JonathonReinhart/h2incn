@@ -60,16 +60,13 @@ char* reserved_words[] = {
    "endif"
 };
 
-void print_copyright(void)
+void print_usage(void)
 {
    printf("\nh2incn v%d.%d.%d\nCopyright (C)2010 Piranha Designs, LLC - All rights reserved.\n\n",
       __H2INCN_VERSION_MAJOR__,
       __H2INCN_VERSION_MINOR__,
       __H2INCN_VERSION_BUILD__);
-}
 
-void print_usage(void)
-{
    printf(
       "usage: h2incn [options] file\n\n"
       "Options:\n"
@@ -1354,7 +1351,6 @@ int main(int argc, char **argv)
    char *tptr;
    int bSuccess;
 
-   print_copyright();
    parse_cmdln(argc, argv);
 
 #ifdef BINTREE_TEST
